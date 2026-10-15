@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-monitor-config
+  labels:
+    app.kubernetes.io/name: config-monitor
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  DEBOUNCE_INTERVAL_SECONDS: "0.5"
+  QUEUE_WORKER_CONCURRENCY: "4"
+  ENABLE_HASH_CHECK: "true"
+  CIRCUIT_BREAKER_FAILURE_THRESHOLD: "5"
+  CIRCUIT_BREAKER_RECOVERY_TIMEOUT_SECONDS: "20.0"

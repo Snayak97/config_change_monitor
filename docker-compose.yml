@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  config-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: config_change_monitor
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Config Change Monitoring System
+      - APP_ENV=production
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      - DEBOUNCE_INTERVAL_SECONDS=0.5
+      - QUEUE_WORKER_CONCURRENCY=4
+      - WEBHOOK_URL=http://localhost:8000/api/v1/test-webhook
+      - WEBHOOK_SECRET=production-secret-token
+      - MAX_RETRIES=4
+      - CIRCUIT_BREAKER_FAILURE_THRESHOLD=5
+    volumes:
+      - ./sample_configs:/app/sample_configs
+      - ./audit_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

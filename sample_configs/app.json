@@ -1,0 +1,15 @@
+{
+  "serviceName": "payment-gateway",
+  "version": "2.4.1",
+  "limits": {
+    "maxRequestPerMinute": 1000,
+    "burst": 50,
+    "timeoutMs": 2500
+  },
+  "endpoints": {
+    "auth": "/api/v2/auth",
+    "charge": "/api/v2/charge"
+  },
+  "maintenance": false,
+  "allowedCurrencies": ["USD", "EUR", "GBP"]
+}

@@ -1,0 +1,19 @@
+cache:
+  enabled: true
+  ttl: 3600
+db:
+  credentials:
+    pool_size: 10
+    username: postgres
+  host: prod-db
+  name: production_db
+  port: 5432
+featureFlags: v1_basic
+lastSimulatedUpdate: '2026-10-15 18:29:51'
+logging:
+  format: json
+  level: debug
+server:
+  host: 0.0.0.0
+  port: 8080
+  workers: 4

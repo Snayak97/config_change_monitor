@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Config Change Monitoring System | Production Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="logo-area">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">
+          <h2>ConfigPulse</h2>
+          <span>Change Monitor</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="overview">
+          <span class="icon">📊</span> Overview
+        </button>
+        <button class="nav-item" data-tab="files">
+          <span class="icon">📁</span> Monitored Files
+          <span class="badge" id="badge-files">0</span>
+        </button>
+        <button class="nav-item" data-tab="events">
+          <span class="icon">⚡</span> Change Events
+          <span class="badge" id="badge-events">0</span>
+        </button>
+        <button class="nav-item" data-tab="webhook">
+          <span class="icon">🪝</span> Webhook History
+          <span class="badge" id="badge-webhook">0</span>
+        </button>
+        <button class="nav-item" data-tab="dlq">
+          <span class="icon">🛡️</span> DLQ & Resilience
+          <span class="badge alert" id="badge-dlq">0</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="system-status">
+          <div class="status-indicator pulse"></div>
+          <div class="status-meta">
+            <span class="status-label">System Active</span>
+            <span class="uptime" id="uptime-display">Uptime: 0s</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-title">
+          <h1 id="page-title">System Overview</h1>
+          <p id="page-desc">Real-time configuration tracking, diff computation & event bus status</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="btn-quick-test">
+            <span>✨ Simulate Change</span>
+          </button>
+          <button class="btn btn-primary" id="btn-add-watch">
+            <span>+ Monitor Path</span>
+          </button>
+          <a href="/docs" target="_blank" class="btn btn-ghost" title="Interactive API Docs">
+            Swagger API
+          </a>
+        </div>
+      </header>
+
+      <!-- Tab Contents -->
+      <div class="content-wrapper">
+        <!-- 1. OVERVIEW TAB -->
+        <section id="tab-overview" class="tab-pane active">
+          <div class="metrics-grid">
+            <div class="metric-card glass">
+              <div class="metric-icon blue">📁</div>
+              <div class="metric-info">
+                <h3>Monitored Files</h3>
+                <div class="metric-value" id="stat-files-count">0</div>
+                <div class="metric-sub">Across .env, .json, .yaml, .prop</div>
+              </div>
+            </div>
+
+            <div class="metric-card glass">
+              <div class="metric-icon purple">⚡</div>
+              <div class="metric-info">
+                <h3>Events Published</h3>
+                <div class="metric-value" id="stat-events-count">0</div>
+                <div class="metric-sub">Structured diff events dispatched</div>
+              </div>
+            </div>
+
+            <div class="metric-card glass">
+              <div class="metric-icon green">🚀</div>
+              <div class="metric-info">
+                <h3>Event Queue Depth</h3>
+                <div class="metric-value" id="stat-queue-depth">0</div>
+                <div class="metric-sub">In-memory async buffer</div>
+              </div>
+            </div>
+
+            <div class="metric-card glass">
+              <div class="metric-icon amber">🛡️</div>
+              <div class="metric-info">
+                <h3>DLQ Records</h3>
+                <div class="metric-value" id="stat-dlq-count">0</div>
+                <div class="metric-sub">Failed events ready for replay</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Circuit Breakers Status Section -->
+          <div class="section-card glass mt-4">
+            <div class="section-header">
+              <h2>Target Circuit Breakers</h2>
+              <span class="section-badge">Fault Tolerance Engine</span>
+            </div>
+            <div class="circuit-breakers-grid" id="circuit-breakers-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Recent Events Preview -->
+          <div class="section-card glass mt-4">
+            <div class="section-header">
+              <h2>Recent Change Stream</h2>
+              <button class="btn btn-link" onclick="switchTab('events')">View All Events →</button>
+            </div>
+            <div class="events-list" id="overview-events-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. MONITORED FILES TAB -->
+        <section id="tab-files" class="tab-pane">
+          <div class="section-card glass">
+            <div class="section-header">
+              <div>
+                <h2>Active Tracked Files</h2>
+                <p>Files monitored simultaneously with debouncing and SHA-256 hash checks</p>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-add-file-trigger">+ Add Target</button>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>File Name</th>
+                    <th>Format</th>
+                    <th>Size</th>
+                    <th>SHA-256 Checksum</th>
+                    <th>Status</th>
+                    <th>Last Modified</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="files-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. CHANGE EVENTS TAB -->
+        <section id="tab-events" class="tab-pane">
+          <div class="section-card glass">
+            <div class="section-header">
+              <div>
+                <h2>Structured Change Events</h2>
+                <p>Computed differences containing added, updated, removed, and type changes</p>
+              </div>
+              <div class="filter-box">
+                <input type="text" id="event-file-filter" placeholder="Filter by filename..." class="form-input">
+              </div>
+            </div>
+            <div class="events-accordion" id="events-accordion-container">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. WEBHOOK HISTORY TAB -->
+        <section id="tab-webhook" class="tab-pane">
+          <div class="section-card glass">
+            <div class="section-header">
+              <div>
+                <h2>Delivered Webhook Payloads</h2>
+                <p>Pay-load receipts captured by built-in test webhook with HMAC-SHA256 signature</p>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="btn-clear-webhook-history">Clear History</button>
+            </div>
+            <div class="webhook-history-list" id="webhook-history-container">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. DLQ & RESILIENCE TAB -->
+        <section id="tab-dlq" class="tab-pane">
+          <div class="section-card glass">
+            <div class="section-header">
+              <div>
+                <h2>Dead Letter Queue (DLQ)</h2>
+                <p>Undelivered events preserved after exponential retry exhaustion or open circuit breaker</p>
+              </div>
+            </div>
+            <div class="dlq-list" id="dlq-records-container">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Watch Modal -->
+  <div class="modal-overlay" id="watch-modal">
+    <div class="modal glass">
+      <div class="modal-header">
+        <h3>Monitor New Path</h3>
+        <button class="btn-close" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label for="watch-input-path">Directory or File Path</label>
+        <input type="text" id="watch-input-path" class="form-input" placeholder="./sample_configs or ./sample_configs/app.json">
+        <p class="form-help">Supports directories (recursive) or individual .env, .json, .yaml, .properties files.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-watch">Start Monitoring</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
